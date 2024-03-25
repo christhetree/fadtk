@@ -41,10 +41,12 @@ def cache_embedding_files(
 
     log.info(f"[Frechet Audio Distance] Loading {len(files)} audio files...")
 
-    # Split files into batches
-    batches = list(np.array_split(files, workers))
-
-    # Cache embeddings in parallel
-    multiprocessing.set_start_method('spawn', force=True)
-    with torch.multiprocessing.Pool(workers) as pool:
-        pool.map(_cache_embedding_batch, [(b, ml, kwargs) for b in batches])
+    if workers == 0:
+        _cache_embedding_batch((files, ml, kwargs))
+    else:
+        # Split files into batches
+        batches = list(np.array_split(files, workers))
+        # Cache embeddings in parallel
+        multiprocessing.set_start_method("spawn", force=True)
+        with torch.multiprocessing.Pool(workers) as pool:
+            pool.map(_cache_embedding_batch, [(b, ml, kwargs) for b in batches])
