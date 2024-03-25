@@ -11,7 +11,6 @@ from .model_loader import ModelLoader
 from .utils import get_cache_embedding_path
 
 
-
 def _cache_embedding_batch(args):
     fs: list[Path]
     ml: ModelLoader
@@ -34,7 +33,8 @@ def cache_embedding_files(files: Union[list[Path], str, Path], ml: ModelLoader, 
     - force_emb_calc (bool): If True, recompute embeddings even if they already exist.
     """
     if isinstance(files, (str, Path)):
-        files = list(Path(files).glob('*.*'))
+        files = list(Path(files).glob("*.*"))
+        files = [str(f) for f in files]
 
     if force_emb_calc:
         emb_path = files[0].parent / "embeddings" / ml.name
@@ -55,7 +55,7 @@ def cache_embedding_files(files: Union[list[Path], str, Path], ml: ModelLoader, 
 
     # Split files into batches
     batches = list(np.array_split(files, workers))
-    
+
     # Cache embeddings in parallel
     multiprocessing.set_start_method('spawn', force=True)
     with torch.multiprocessing.Pool(workers) as pool:

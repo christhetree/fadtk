@@ -143,6 +143,7 @@ class FrechetAudioDistance:
         if not new.exists():
             cache_dir.mkdir(parents=True, exist_ok=True)
             if TORCHAUDIO_RESAMPLING:
+                f = str(f)
                 x, fsorig = torchaudio.load(f)
                 x = torch.mean(x,0).unsqueeze(0) # convert to mono
                 resampler = torchaudio.transforms.Resample(
@@ -154,6 +155,7 @@ class FrechetAudioDistance:
                     beta=14.769656459379492,
                 )
                 y = resampler(x)
+                new = str(new)
                 torchaudio.save(new, y, self.ml.sr, encoding="PCM_S", bits_per_sample=16)
             else:                
                 sox_args = ['-r', str(self.ml.sr), '-c', '1', '-b', '16']
