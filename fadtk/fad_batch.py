@@ -11,7 +11,6 @@ from .model_loader import ModelLoader
 from .utils import get_cache_embedding_path
 
 
-
 def _cache_embedding_batch(args):
     fs: list[Path]
     ml: ModelLoader
@@ -22,14 +21,17 @@ def _cache_embedding_batch(args):
         fad.cache_embedding_file(f)
 
 
-def cache_embedding_files(files: Union[list[Path], str, Path], ml: ModelLoader, workers: int = 8, **kwargs):
+def cache_embedding_files(
+    files: Union[list[Path], str, Path], ml: ModelLoader, workers: int = 8, **kwargs
+):
     """
     Get embeddings for all audio files in a directory.
 
     :param ml_fn: A function that returns a ModelLoader instance.
     """
     if isinstance(files, (str, Path)):
-        files = list(Path(files).glob('*.*'))
+        files = list(Path(files).glob("*.*"))
+        files = [str(f) for f in files]
 
     # Filter out files that already have embeddings
     files = [f for f in files if not get_cache_embedding_path(ml.name, f).exists()]
@@ -41,7 +43,7 @@ def cache_embedding_files(files: Union[list[Path], str, Path], ml: ModelLoader, 
 
     # Split files into batches
     batches = list(np.array_split(files, workers))
-    
+
     # Cache embeddings in parallel
     multiprocessing.set_start_method('spawn', force=True)
     with torch.multiprocessing.Pool(workers) as pool:
