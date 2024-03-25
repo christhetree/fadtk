@@ -48,7 +48,7 @@ def calc_embd_statistics(embd_lst: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 def calc_frechet_distance(mu1, cov1, mu2, cov2, eps=1e-6):
     """
     Adapted from: https://github.com/mseitzer/pytorch-fid/blob/master/src/pytorch_fid/fid_score.py
-    
+
     Numpy implementation of the Frechet Distance.
     The Frechet distance between two multivariate Gaussians X_1 ~ N(mu_1, C_1)
     and X_2 ~ N(mu_2, C_2) is
@@ -83,7 +83,7 @@ def calc_frechet_distance(mu1, cov1, mu2, cov2, eps=1e-6):
     # NOTE: issues with sqrtm for newer scipy versions
     # using eigenvalue method as workaround
     covmean_sqrtm, _ = linalg.sqrtm(cov1.dot(cov2), disp=False)
-    
+
     # eigenvalue method
     D, V = linalg.eig(cov1.dot(cov2))
     covmean = (V * scisqrt(D)) @ linalg.inv(V)
@@ -118,7 +118,8 @@ def calc_frechet_distance(mu1, cov1, mu2, cov2, eps=1e-6):
 
 
 class FrechetAudioDistance:
-    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    # device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    device = torch.device('cpu')  # TODO(cm): tmp
     loaded = False
 
     def __init__(self, ml: ModelLoader, audio_load_worker=8, load_model=True):
@@ -157,27 +158,27 @@ class FrechetAudioDistance:
                 y = resampler(x)
                 new = str(new)
                 torchaudio.save(new, y, self.ml.sr, encoding="PCM_S", bits_per_sample=16)
-            else:                
+            else:
                 sox_args = ['-r', str(self.ml.sr), '-c', '1', '-b', '16']
-    
+
                 # ffmpeg has bad resampling compared to SoX
                 # SoX has bad format support compared to ffmpeg
                 # If the file format is not supported by SoX, use ffmpeg to convert it to wav
-    
+
                 if f.suffix[1:] not in self.sox_formats:
                     # Use ffmpeg for format conversion and then pipe to sox for resampling
                     with tempfile.TemporaryDirectory() as tmp:
                         tmp = Path(tmp) / 'temp.wav'
-    
+
                         # Open ffmpeg process for format conversion
                         subprocess.run([
-                            ffmpeg_path, 
-                            "-hide_banner", "-loglevel", "error", 
+                            ffmpeg_path,
+                            "-hide_banner", "-loglevel", "error",
                             "-i", f, tmp])
-                        
+
                         # Open sox process for resampling, taking input from ffmpeg's output
                         subprocess.run([sox_path, tmp, *sox_args, new])
-                        
+
                 else:
                     # Use sox for resampling
                     subprocess.run([sox_path, f, *sox_args, new])
@@ -206,7 +207,7 @@ class FrechetAudioDistance:
         cache = get_cache_embedding_path(self.ml.name, audio_dir)
         assert cache.exists(), f"Embedding file {cache} does not exist, please run cache_embedding_file first."
         return np.load(cache)
-    
+
     def load_embeddings(self, dir: Union[str, Path], max_count: int = -1, concat: bool = True):
         """
         Load embeddings for all audio files in a directory.
@@ -234,13 +235,13 @@ class FrechetAudioDistance:
                 total_len += embd_lst[-1].shape[0]
                 if total_len > max_count:
                     break
-        
+
         # Concatenate embeddings if needed
         if concat:
             return np.concatenate(embd_lst, axis=0)
         else:
             return embd_lst, files
-    
+
     def load_stats(self, path: PathLike):
         """
         Load embedding statistics from a directory.
@@ -271,13 +272,13 @@ class FrechetAudioDistance:
             mu = np.load(cache_dir / "mu.npy")
             cov = np.load(cache_dir / "cov.npy")
             return mu, cov
-        
+
         if not path.is_dir():
             log.error(f"The dataset you want to use ({path}) is not a directory nor a file.")
             exit(1)
 
         log.info(f"Loading embedding files from {path}...")
-        
+
         mu, cov = calculate_embd_statistics_online(list(emb_dir.glob("*.npy")))
         log.info("> Embeddings statistics calculated.")
 
@@ -285,7 +286,7 @@ class FrechetAudioDistance:
         cache_dir.mkdir(parents=True, exist_ok=True)
         np.save(cache_dir / "mu.npy", mu)
         np.save(cache_dir / "cov.npy", cov)
-        
+
         return mu, cov
 
     def score(self, baseline: PathLike, eval: PathLike):
@@ -319,19 +320,19 @@ class FrechetAudioDistance:
             embeds = np.concatenate(embeds, axis=0)
         else:
             embeds = self._load_embeddings(eval_files, concat=True)
-        
+
         # Calculate maximum n
         max_n = len(embeds)
 
         # Generate list of ns to use
         ns = [int(n) for n in np.linspace(min_n, max_n, steps)]
-        
+
         results = []
         for n in tq(ns, desc="Calculating FAD-inf"):
             # Select n feature frames randomly (with replacement)
             indices = np.random.choice(embeds.shape[0], size=n, replace=True)
             embds_eval = embeds[indices]
-            
+
             mu_eval, cov_eval = calc_embd_statistics(embds_eval)
             fad_score = calc_frechet_distance(mu_base, cov_base, mu_eval, cov_eval)
 
@@ -348,7 +349,7 @@ class FrechetAudioDistance:
 
         # Since intercept is the FAD-inf, we can just return it
         return FADInfResults(score=intercept, slope=slope, r2=r2, points=results)
-    
+
     def score_individual(self, baseline: PathLike, eval_dir: PathLike, csv_name: Union[Path, str]) -> Path:
         """
         Calculate the FAD score for each individual file in eval_dir and write the results to a csv file.

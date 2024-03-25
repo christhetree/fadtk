@@ -26,7 +26,8 @@ class ModelLoader(ABC):
         self.sr = sr
         self.num_features = num_features
         self.name = name
-        self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+        # self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+        self.device = torch.device('cpu')  # TODO(cm): tmp
 
     def get_embedding(self, audio: np.ndarray):
         embd = self._get_embedding(audio)
