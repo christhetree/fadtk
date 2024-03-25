@@ -226,7 +226,10 @@ class FrechetAudioDistance:
 
         # Load embeddings
         if max_count == -1:
-            embd_lst = tmap(self.read_embedding_file, files, desc="Loading audio files...", max_workers=self.audio_load_worker)
+            if self.audio_load_worker == 0:
+                embd_lst = [self.read_embedding_file(f) for f in tq(files, "Loading audio files...")]
+            else:
+                embd_lst = tmap(self.read_embedding_file, files, desc="Loading audio files...", max_workers=self.audio_load_worker)
         else:
             total_len = 0
             embd_lst = []
@@ -384,7 +387,10 @@ class FrechetAudioDistance:
 
         # 3. Calculate z score for each eval file
         _files = list(Path(eval_dir).glob("*.*"))
-        scores = tmap(_find_z_helper, _files, desc=f"Calculating scores", max_workers=self.audio_load_worker)
+        if self.audio_load_worker == 0:
+            scores = [_find_z_helper(f) for f in tq(_files, desc="Calculating scores")]
+        else:
+            scores = tmap(_find_z_helper, _files, desc=f"Calculating scores", max_workers=self.audio_load_worker)
 
         # 4. Write the sorted z scores to csv
         pairs = list(zip(_files, scores))
