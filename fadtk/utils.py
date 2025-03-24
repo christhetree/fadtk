@@ -4,7 +4,7 @@ from typing import Union
 
 import numpy as np
 from hypy_utils.nlp_utils import substr_between
-from hypy_utils.tqdm_utils import pmap
+from hypy_utils.tqdm_utils import pmap, tq
 
 PathLike = Union[str, Path]
 
@@ -35,7 +35,8 @@ def calculate_embd_statistics_online(
     )  # Sum of squares for online covariance computation
     n = 0  # Counter for total number of frames
 
-    results = pmap(_process_file, files, desc="Calculating statistics")
+    # results = pmap(_process_file, files, desc="Calculating statistics")
+    results = [_process_file(f) for f in tq(files, desc="Calculating statistics")]
     for _mu, _S, _n in results:
         delta = _mu - mu
         mu += _n / (n + _n) * delta

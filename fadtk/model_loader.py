@@ -141,6 +141,7 @@ class PANNsModel(ModelLoader):
         features_list = ["2048", "logits"]
         current_file_dir = os.path.dirname(os.path.realpath(__file__))
 
+        map_location = "cuda" if torch.cuda.is_available() else "cpu"
         if self.variant == "cnn14-16k":
             self.model = panns.Cnn14(
                 features_list=features_list,
@@ -153,9 +154,9 @@ class PANNsModel(ModelLoader):
                 classes_num=527,
             )
             state_dict = torch.load(
-                f"{current_file_dir}/panns/ckpt/Cnn14_16k_mAP=0.438.pth"
+                f"{current_file_dir}/panns/ckpt/Cnn14_16k_mAP=0.438.pth",
+                map_location=map_location,
             )
-            # state_dict = torch.load(f"{current_file_dir}/panns/ckpt/Cnn14_16k_mAP=0.438.pth", map_location="cpu")
             self.model.load_state_dict(state_dict["model"])
 
         elif self.variant == "cnn14-32k":
@@ -170,9 +171,8 @@ class PANNsModel(ModelLoader):
                 classes_num=527,
             )
             state_dict = torch.load(
-                f"{current_file_dir}/panns/ckpt/Cnn14_mAP=0.431.pth"
+                f"{current_file_dir}/panns/ckpt/Cnn14_mAP=0.431.pth", map_location="cpu"
             )
-            # state_dict = torch.load(f"{current_file_dir}/panns/ckpt/Cnn14_mAP=0.431.pth", map_location="cpu")
             self.model.load_state_dict(state_dict["model"])
 
         elif self.variant == "wavegram-logmel":
@@ -187,9 +187,9 @@ class PANNsModel(ModelLoader):
             )
             current_file_dir = os.path.dirname(os.path.realpath(__file__))
             state_dict = torch.load(
-                f"{current_file_dir}/panns/ckpt/Wavegram_Logmel_Cnn14_mAP=0.439.pth"
+                f"{current_file_dir}/panns/ckpt/Wavegram_Logmel_Cnn14_mAP=0.439.pth",
+                map_location="cpu",
             )
-            # state_dict = torch.load(f"{current_file_dir}/panns/ckpt/Wavegram_Logmel_Cnn14_mAP=0.439.pth", map_location="cpu")
             self.model.load_state_dict(state_dict["model"])
 
         else:
