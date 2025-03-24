@@ -280,7 +280,7 @@ class FrechetAudioDistance:
             # Check if it's a pre-computed statistic file
             bp = Path(__file__).parent / "stats"
             stats = bp / (path.lower() + ".npz")
-            print(stats)
+            # print(stats)
             if stats.exists():
                 path = stats
 

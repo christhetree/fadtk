@@ -36,7 +36,8 @@ def calculate_embd_statistics_online(
     n = 0  # Counter for total number of frames
 
     # results = pmap(_process_file, files, desc="Calculating statistics")
-    results = [_process_file(f) for f in tq(files, desc="Calculating statistics")]
+    # results = [_process_file(f) for f in tq(files, desc="Calculating statistics")]
+    results = [_process_file(f) for f in files]
     for _mu, _S, _n in results:
         delta = _mu - mu
         mu += _n / (n + _n) * delta
