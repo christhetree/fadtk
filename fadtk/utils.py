@@ -1,11 +1,10 @@
-from pathlib import Path
 import subprocess
-import numpy as np
+from pathlib import Path
 from typing import Union
 
+import numpy as np
 from hypy_utils.nlp_utils import substr_between
 from hypy_utils.tqdm_utils import pmap
-
 
 PathLike = Union[str, Path]
 
@@ -16,7 +15,9 @@ def _process_file(file: PathLike):
     return np.mean(embd, axis=0), np.cov(embd, rowvar=False) * (n - 1), n
 
 
-def calculate_embd_statistics_online(files: list[PathLike]) -> tuple[np.ndarray, np.ndarray]:
+def calculate_embd_statistics_online(
+    files: list[PathLike],
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Calculate the mean and covariance matrix of a list of embeddings in an online manner.
 
@@ -29,10 +30,12 @@ def calculate_embd_statistics_online(files: list[PathLike]) -> tuple[np.ndarray,
 
     # Initialize the mean and covariance matrix
     mu = np.zeros(embd_dim)
-    S = np.zeros((embd_dim, embd_dim))  # Sum of squares for online covariance computation
+    S = np.zeros(
+        (embd_dim, embd_dim)
+    )  # Sum of squares for online covariance computation
     n = 0  # Counter for total number of frames
 
-    results = pmap(_process_file, files, desc='Calculating statistics')
+    results = pmap(_process_file, files, desc="Calculating statistics")
     for _mu, _S, _n in results:
         delta = _mu - mu
         mu += _n / (n + _n) * delta
@@ -44,7 +47,7 @@ def calculate_embd_statistics_online(files: list[PathLike]) -> tuple[np.ndarray,
     else:
         cov = S / (n - 1)  # compute the covariance matrix
         return mu, cov
-    
+
 
 def find_sox_formats(sox_path: str) -> list[str]:
     """
@@ -67,6 +70,7 @@ def get_cache_embedding_path(model: str, audio_dir: PathLike) -> Path:
     audio_dir = Path(audio_dir)
     return audio_dir.parent / "embeddings" / model / audio_dir.with_suffix(".npy").name
 
+
 def chunk_np_array(np_array, chunk_size, discard_remainder=True):
     """
     Split a NumPy array into chunks of a specified size.
@@ -81,8 +85,12 @@ def chunk_np_array(np_array, chunk_size, discard_remainder=True):
     """
     if discard_remainder:
         num_chunks = len(np_array) // chunk_size
-        output = np.array([np_array[i * chunk_size:(i + 1) * chunk_size] for i in range(num_chunks)])
+        output = np.array(
+            [np_array[i * chunk_size : (i + 1) * chunk_size] for i in range(num_chunks)]
+        )
     else:
-        output = np.array([np_array[i:i + chunk_size] for i in range(0, len(np_array), chunk_size)])
+        output = np.array(
+            [np_array[i : i + chunk_size] for i in range(0, len(np_array), chunk_size)]
+        )
 
     return output

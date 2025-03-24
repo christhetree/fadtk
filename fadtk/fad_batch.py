@@ -1,9 +1,10 @@
 import multiprocessing
 import os
-from pathlib import Path
-from typing import Callable, Union
-import numpy as np
 import shutil
+from pathlib import Path
+from typing import Union
+
+import numpy as np
 import torch
 
 from .fad import log, FrechetAudioDistance
@@ -21,8 +22,13 @@ def _cache_embedding_batch(args):
         fad.cache_embedding_file(f)
 
 
-def cache_embedding_files(files: Union[list[Path], str, Path], ml: ModelLoader, workers: int = 8, 
-                          force_emb_calc: bool = False, **kwargs):
+def cache_embedding_files(
+    files: Union[list[Path], str, Path],
+    ml: ModelLoader,
+    workers: int = 8,
+    force_emb_calc: bool = False,
+    **kwargs,
+):
     """
     Get embeddings for all audio files in a directory.
 
@@ -42,7 +48,6 @@ def cache_embedding_files(files: Union[list[Path], str, Path], ml: ModelLoader, 
             # Remove the folder and its contents
             shutil.rmtree(emb_path)
             print(f"The folder '{emb_path}' has been successfully removed.")
-        
 
     # Filter out files that already have embeddings
     files = [f for f in files if not get_cache_embedding_path(ml.name, f).exists()]
@@ -57,6 +62,6 @@ def cache_embedding_files(files: Union[list[Path], str, Path], ml: ModelLoader, 
     batches = list(np.array_split(files, workers))
 
     # Cache embeddings in parallel
-    multiprocessing.set_start_method('spawn', force=True)
+    multiprocessing.set_start_method("spawn", force=True)
     with torch.multiprocessing.Pool(workers) as pool:
         pool.map(_cache_embedding_batch, [(b, ml, kwargs) for b in batches])
